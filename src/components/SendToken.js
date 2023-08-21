@@ -14,17 +14,13 @@ export default function SendToken() {
   const [errormessage, setErrormessage] = useState(null);
   const [toAddress, setToAddress] = useState("");
   const [amount, setAmount] = useState("");
+  const [userTokenBalance, setUserTokenBalance] = useState(0);
 
   const contractAddress = "0x3F636eA1474409916a2cCa10c381bB5ff9802547";
 
   const ConnectWallet = () => {
     if (window.ethereum) {
-      // const providers = new ethers.providers.JsonRpcProvider(
-      //   "https://rpc.ankr.com/polygon_mumbai"
-      // );
       const providers = new ethers.providers.Web3Provider(window.ethereum);
-      console.log("we"+window.ethereum);
-      console.log("providers"+provider);
       setProvider(providers);
       if (provider) {
         window.ethereum
@@ -40,17 +36,41 @@ export default function SendToken() {
       setErrormessage("Install Metamask! ");
     }
   };
+  // Function to fetch the user's token balance
+  const fetchUserTokenBalance = async () => {
+    if (tokenContract && userAddress) {
+      try {
+        // Call the balanceOf function of the contract to get the user's token balance
+        const balance = await tokenContract.callStatic.balanceOf(userAddress);
+        setUserTokenBalance(balance.toString());
+      } catch (error) {
+        console.error("Error fetching user's token balance:", error);
+        setErrormessage("Failed to fetch user's token balance");
+      }
+    }
+  };
+  useEffect(() => {
+    fetchUserTokenBalance();
+  }, [tokenContract, userAddress]);
+
   const fetchTokenDetails = async () => {
     if (tokenContract) {
       try {
         const name = await tokenContract.name();
         const symbol = await tokenContract.symbol();
+
         // const balance = await tokenContract.balanceOf(userAddress);
         const totalSupply = await tokenContract.totalSupply();
 
+    //Convert the balance and totalSupply to numbers and remove extra zeroes
+      const formattedBalance = parseFloat(ethers.utils.formatUnits(balance, "ether"));
+      const formattedTotalSupply = parseFloat(ethers.utils.formatUnits(totalSupply, "ether"));
+
         setTokenName(name);
         setTokenSymbol(symbol);
-        setBalance(balance.toString());
+        setBalance(formattedBalance);
+        setTotalSupply(formattedTotalSupply);
+    
         setTotalSupply(totalSupply.toString());
       } catch (error) {
         console.error("Error fetching token details:", error);
@@ -66,13 +86,20 @@ export default function SendToken() {
       try {
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         const signer = provider.getSigner();
-        // const signer = await provider.getSigner();
-        console.log(signer);
         const contract = new ethers.Contract(contractAddress, TokenAbi, signer);
+
+        const balance = await tokenContract.callStatic.balanceOf(userAddress);
+        
         const amountInWei = ethers.utils.parseUnits(amount, "ether");
+//lt is to check balance is less than amountInWei
+        if (balance.lt(amountInWei)) {
+          setErrormessage("Insufficient balance for the transfer");
+          return;
+        }
         console.log("amountWei:" + amountInWei);
         const tx = await contract.transfer(toAddress, amountInWei);
         const receipt = await tx.wait();
+        console.log(receipt);
         alert(
           `Transaction send successfully! amount of ${amount} to Address:${toAddress}`
         );
@@ -82,6 +109,8 @@ export default function SendToken() {
       } catch (error) {
         console.error("Error transferring tokens:", error);
         throw new Error("Failed to transfer tokens: " + error.message);
+        // setErrormessage("Failed to transfer tokens: " + error.message);
+     
       }
     }
     setAmount("");
@@ -105,10 +134,10 @@ export default function SendToken() {
         <p id="t1">Token Symbol:</p>
         <p id="t2"> {tokenSymbol}</p>
       </div>
-      {/* <div className="cont3">
-        <p id="t1">Balance:</p>
-        <p id="t2">{balance}</p>
-      </div> */}
+      <div className="cont3">
+        <p id="t1">TokenBalance:</p>
+        <p id="t2">{userTokenBalance}</p>
+      </div>
       <div className="cont3">
         <p id="t1">Total Supply:</p>
         <p id="t2">{totalSupply}</p>
@@ -139,7 +168,10 @@ export default function SendToken() {
       <button className="connect2" onClick={transferERC20Tokens}>
         Transfer
       </button>
+      <h6 id="t2">
       {errormessage}
+      </h6>
+      
     </div>
   );
 }

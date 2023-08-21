@@ -107,12 +107,12 @@
     flex-direction: row;
     margin: 0px;
   }
-  .cont7 #t2 {
+  #t2 {
     margin-top: 4px;
     border-radius: nullpx;
-    font-size: 34px;
+    font-size: 24px;
     font-weight: 700;
-    color: #a6a0bb;
+    color: #e7e4f0;
   }
   #st_search{
     height: 42.00021362304688px;

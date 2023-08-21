@@ -15,6 +15,7 @@ export default function ConnectedWallet() {
         params: [String(accountAddress), "latest"],
       })
       .then((balance) => {
+        console.log(balance);
         setUserBalance(ethers.utils.formatEther(balance));
       });
   };

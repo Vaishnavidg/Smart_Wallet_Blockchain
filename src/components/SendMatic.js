@@ -35,6 +35,7 @@ export default function SendMatic() {
       {
         from: defaultAccount,
         to: toAddress,
+        
         value: Number(Math.pow(10, 18) * amount).toString(16),
       },
     ];
@@ -44,12 +45,16 @@ export default function SendMatic() {
         method: "eth_sendTransaction",
         params,
       });
+     console.log(result);
+      // const receipt = await result.wait();
+
       alert(
-        `Transaction send successfully! amount of ${amount} to Address:${toAddress}`
+        `Transaction sent successfully! Amount of ${amount} to Address: ${toAddress}\n`
       );
-      console.log("Transaction result:", result);
+      // console.log("Transaction receipt:", receipt);
     } catch (err) {
       console.log("Error sending transaction:", err);
+      window.alert(err)
     }
     setToAddress("");
     setAmount("");
